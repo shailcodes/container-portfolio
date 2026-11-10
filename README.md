@@ -51,5 +51,16 @@ const CONFIG = {
   tools:    [ ... ],
 };
 
+
+## Installation / Local Setup
+
+Because this project uses **ES Modules** and **import maps**, opening the `index.html` file directly (`file://` protocol) will result in CORS errors. You need to run a local server.
+
+1. **Clone or Download the repo:**
+   ```bash
+   git clone https://github.com/shailcodes/container-portfolio.git
+   cd container-portfolio
+
+
 ## Credits
 - Design and code: [@shailcodes]
