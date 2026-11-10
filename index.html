@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Container Yard — Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --blue:#2467d8; --blue-d:#1a4fb3; --paper:#f3efe6; --red:#e8362c; --ink:#0a0b0f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--blue);color:#fff;
+    font-family:'Archivo',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  body{background:
+      radial-gradient(120% 90% at 50% 20%, #2f78ea 0%, #2467d8 45%, #1b52b8 100%);}
+
+  /* giant background word */
+  #big{
+    position:fixed;left:50%;top:57vh;transform:translate(-50%,-50%);
+    font-weight:900;font-stretch:125%;font-variation-settings:'wdth' 125;
+    line-height:.8;letter-spacing:-.02em;white-space:nowrap;color:var(--paper);
+    user-select:none;pointer-events:none;z-index:1;
+    font-family:'Archivo',Impact,'Arial Black',sans-serif;
+  }
+
+  canvas#gl{position:fixed;inset:0;width:100%;height:100%;z-index:2;display:block;touch-action:manipulation}
+
+  header{position:fixed;left:0;right:0;top:0;z-index:6;display:flex;align-items:center;
+    justify-content:space-between;padding:22px clamp(16px,3vw,40px);font-size:13px;font-weight:600;
+    letter-spacing:.01em;pointer-events:none}
+  header > *{pointer-events:auto}
+  .logo{font-weight:900;font-size:22px;letter-spacing:-.04em;text-transform:lowercase;color:#fff;text-decoration:none}
+  nav{display:flex;gap:clamp(14px,2.4vw,34px)}
+  nav a,.talk{color:#fff;text-decoration:none;opacity:.9;cursor:pointer;transition:opacity .2s}
+  nav a:hover,.talk:hover{opacity:1;text-decoration:underline;text-underline-offset:4px}
+  .meta{position:fixed;left:clamp(16px,3vw,40px);top:70px;z-index:6;font:500 10px 'JetBrains Mono',monospace;
+    letter-spacing:.14em;text-transform:uppercase;opacity:.75;pointer-events:none;line-height:1.7}
+  #hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:6;
+    font:500 11px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;opacity:.8;
+    pointer-events:none;transition:opacity .4s;white-space:nowrap}
+  #hint.hide{opacity:0}
+
+  /* content that lives inside the opened container */
+  #panel{
+    --u:5px;position:fixed;z-index:5;left:0;top:0;width:100px;height:100px;opacity:0;pointer-events:none;
+    transition:opacity .35s ease;color:#eceef3;overflow:hidden;
+    background:#0a0b0f repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 2px,transparent 2px 12px);
+    box-shadow:inset 0 0 calc(var(--u)*6) rgba(0,0,0,.9);
+  }
+  #panel.show{opacity:1;pointer-events:auto}
+  #panel .in{height:100%;overflow:auto;padding:calc(var(--u)*4.2) calc(var(--u)*5.5);scrollbar-width:thin}
+  #panel .x{position:absolute;right:calc(var(--u)*2);top:calc(var(--u)*1.6);z-index:2;
+    width:max(22px,calc(var(--u)*4));height:max(22px,calc(var(--u)*4));border-radius:50%;
+    border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#fff;
+    font-size:max(11px,calc(var(--u)*1.8));cursor:pointer;line-height:1}
+  #panel .x:hover{background:var(--red);border-color:var(--red)}
+  .eyebrow{font:500 max(9px,calc(var(--u)*1.55)) 'JetBrains Mono',monospace;letter-spacing:.14em;
+    text-transform:uppercase;color:#8f94a1;margin-bottom:calc(var(--u)*1.2)}
+  #panel h2{font-weight:800;font-stretch:112%;font-size:max(18px,calc(var(--u)*6.2));line-height:1.02;
+    letter-spacing:-.025em;margin-bottom:calc(var(--u)*1.6)}
+  #panel h2 em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:var(--red);
+    letter-spacing:0;font-stretch:100%}
+  #panel p{font-size:max(11px,calc(var(--u)*2.3));line-height:1.5;color:#aeb3bf;max-width:44em;
+    font-stretch:100%;font-weight:400}
+  .chips{display:flex;flex-wrap:wrap;gap:calc(var(--u)*1);margin-top:calc(var(--u)*2.2)}
+  .chips span{font:500 max(10px,calc(var(--u)*1.7)) 'JetBrains Mono',monospace;padding:.45em .9em;
+    border:1px solid rgba(255,255,255,.22);border-radius:99px;color:#dfe2ea}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(max(110px,calc(var(--u)*22)),1fr));
+    gap:calc(var(--u)*1.4);margin-top:calc(var(--u)*2.2)}
+  .card{border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*1);padding:calc(var(--u)*1.8);
+    background:rgba(255,255,255,.03)}
+  .card b{display:block;font-size:max(11px,calc(var(--u)*2.1));font-weight:700;margin-bottom:.25em;color:#fff;font-stretch:100%}
+  .card small{font-size:max(10px,calc(var(--u)*1.7));color:#8f94a1;line-height:1.4;display:block}
+  .card i{font:500 max(9px,calc(var(--u)*1.4)) 'JetBrains Mono',monospace;color:var(--red);font-style:normal;
+    display:block;margin-bottom:.5em;letter-spacing:.1em}
+  .btn{display:inline-block;margin-top:calc(var(--u)*2.2);padding:.7em 1.3em;border-radius:99px;background:var(--red);
+    color:#fff;text-decoration:none;font-weight:700;font-size:max(11px,calc(var(--u)*2));font-stretch:100%}
+
+  #err{position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#300;color:#fdd;padding:12px;
+    font:12px/1.4 monospace;border-radius:8px;display:none;white-space:pre-wrap}
+</style>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+} }
+</script>
+</head>
+<body>
+
+<h1 id="big">PORTFOLIO</h1>
+<canvas id="gl"></canvas>
+
+<header>
+  <a class="logo" href="#" id="logo">folio.</a>
+  <nav>
+    <a data-open="work">Work</a>
+    <a data-open="about">About</a>
+    <a data-open="process">Process</a>
+    <a data-open="hello">Contact</a>
+  </nav>
+  <a class="talk" data-open="hello">Let's Talk ↗</a>
+</header>
+<div class="meta" id="meta"></div>
+<div id="hint">Click a container</div>
+<div id="panel"></div>
+<div id="err"></div>
+<noscript><p style="position:fixed;inset:0;display:grid;place-items:center">Please enable JavaScript.</p></noscript>
+
+<script type="module">
+import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
+
+/* ═══════════════════════════════════════════════════════════
+   EDIT ME — all your content lives here
+   ═══════════════════════════════════════════════════════════ */
+const CONFIG = {
+  name:  'Shailendra',
+  role:  'Designer & creative developer',
+  city:  'Mumbai, IN',
+  email: 'hello@yourdomain.com',
+  year:  '2026',
+  services: ['Brand identity','Web design','Front-end dev','Motion & 3D','UI / UX'],
+  projects: [
+    { n:'01', t:'Project One',   d:'Brand + website · 2026' },
+    { n:'02', t:'Project Two',   d:'Mobile app · 2025' },
+    { n:'03', t:'Project Three', d:'3D web experience · 2025' },
+  ],
+  timeline: [
+    { n:'2025 —',    t:'Studio / Company',  d:'Senior designer. Led product and brand work.' },
+    { n:'2023 – 25', t:'Another Company',   d:'Designer & front-end developer.' },
+    { n:'2021 – 23', t:'Freelance',         d:'Websites and identities for startups.' },
+  ],
+  process: [
+    { n:'01', t:'Discover', d:'Goals, users, constraints.' },
+    { n:'02', t:'Design',   d:'Sketch, prototype, test.' },
+    { n:'03', t:'Build',    d:'Clean, fast, accessible code.' },
+    { n:'04', t:'Launch',   d:'Ship, measure, improve.' },
+  ],
+  tools: ['Figma','Three.js','React','TypeScript','Blender','After Effects','Node','Tailwind'],
+};
+
+/* Containers = sections. `id` is what the nav links point at. */
+const SECTIONS = [
+  { id:'what',    label:['WHAT','I DO'],  color:'#d3271f', code:'WHDO 204518-7',
+    eyebrow:'02 / WHAT I DO', title:'What I <em>do</em>',
+    body:'I design and build digital things end to end — from the first sketch to the last pixel of code.',
+    extra: () => `<div class="chips">${CONFIG.services.map(s=>`<span>${s}</span>`).join('')}</div>` },
+
+  { id:'port',    label:['PORT','FOLIO'], color:'#d3271f', code:'PRTF 771203-1',
+    eyebrow:'03 / PORTFOLIO', title:'Selected <em>projects</em>',
+    body:'A few things I\'m proud of. Swap these with your own.',
+    extra: () => `<div class="cards">${CONFIG.projects.map(p=>`<div class="card"><i>${p.n}</i><b>${p.t}</b><small>${p.d}</small></div>`).join('')}</div>` },
+
+  { id:'hello',   label:['SAY','HELLO'],  color:'#2b3fc2', code:'HLLO 330291-4',
+    eyebrow:'01 / HELLO', title:`Hi, I'm <em>${CONFIG.name}</em>`,
+    body:`${CONFIG.role}. Based in ${CONFIG.city}. I like playful interfaces, careful details and work that feels alive.`,
+    extra: () => `<a class="btn" href="mailto:${CONFIG.email}">${CONFIG.email} ↗</a>` },
+
+  { id:'work',    label:['THE','WORK'],   color:'#e0541c', code:'WORK 118842-0',
+    eyebrow:'04 / THE WORK', title:'Where I\'ve <em>worked</em>',
+    body:'Roles and teams that shaped how I work.',
+    extra: () => `<div class="cards">${CONFIG.timeline.map(p=>`<div class="card"><i>${p.n}</i><b>${p.t}</b><small>${p.d}</small></div>`).join('')}</div>` },
+
+  { id:'about',   label:['ABOUT','ME'],   color:'#2a3fb8', code:'ABME 560912-3',
+    eyebrow:'05 / ABOUT ME', title:'A bit <em>about</em> me',
+    body:'Curious by default. I started with pixels, fell for code, and now I enjoy the space where both meet. Outside work: cycling, film photography and way too much coffee.',
+    extra: () => '' },
+
+  { id:'process', label:['PRO','CESS'],   color:'#eeb31b', code:'PROC 902114-6',
+    eyebrow:'06 / PROCESS', title:'How I <em>work</em>',
+    body:'Simple, honest and collaborative.',
+    extra: () => `<div class="cards">${CONFIG.process.map(p=>`<div class="card"><i>${p.n}</i><b>${p.t}</b><small>${p.d}</small></div>`).join('')}</div>` },
+
+  { id:'tools',   label:['TOOL','KIT'],   color:'#b7bac1', code:'TOOL 447730-9',
+    eyebrow:'07 / TOOLKIT', title:'My <em>toolkit</em>',
+    body:'The things I reach for every day.',
+    extra: () => `<div class="chips">${CONFIG.tools.map(s=>`<span>${s}</span>`).join('')}</div>` },
+];
+
+/* ═══════════════════════════════════════════════════════════ */
+
+const $ = s => document.querySelector(s);
+const errBox = $('#err');
+function showErr(m){ errBox.style.display='block'; errBox.textContent += m + '\n'; }
+window.addEventListener('error', e => showErr(String(e.message)));
+window.addEventListener('unhandledrejection', e => showErr(String(e.reason && e.reason.stack || e.reason)));
+
+$('#meta').innerHTML = `${CONFIG.role}<br>${CONFIG.city} · ${CONFIG.year}`;
+
+/* container dimensions (world units) */
+const L = 2.6, H = 1.2, D = 1.2;
+const HA = 0.64;                 // claw-head height above container top when gripping
+const FOV = 32;
+const DOOR_OPEN = 2.4;           // radians
+
+const lerp  = (a,b,t) => a + (b-a)*t;
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const eio   = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+const eoc   = t => 1-Math.pow(1-t,3);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* tiny tween engine driven by the render loop */
+const tweens = [];
+function tween(ms, fn, ease = eio){
+  return new Promise(res => tweens.push({ t0: performance.now(), ms, fn, ease, res }));
+}
+
+/* ─── renderer / scene ─── */
+const canvas = $('#gl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 200);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x35508f, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 2.6);
+sun.position.set(-5, 10, 12);
+scene.add(sun);
+
+/* ─── physics (2D-ish: z locked, rotation about z only) ─── */
+const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -24, 0) });
+world.allowSleep = false;
+world.solver.iterations = 18;
+world.defaultContactMaterial.friction = 0.55;
+world.defaultContactMaterial.restitution = 0.12;
+
+const floorBody = new CANNON.Body({ mass:0, shape:new CANNON.Box(new CANNON.Vec3(60,1,6)) });
+floorBody.position.set(0,-1,0);
+const wallLBody = new CANNON.Body({ mass:0, shape:new CANNON.Box(new CANNON.Vec3(1,60,6)) });
+const wallRBody = new CANNON.Body({ mass:0, shape:new CANNON.Box(new CANNON.Vec3(1,60,6)) });
+world.addBody(floorBody); world.addBody(wallLBody); world.addBody(wallRBody);
+
+/* ─── textures ─── */
+async function loadFonts(){
+  try{
+    await Promise.race([
+      Promise.all([
+        document.fonts.load('900 120px "Archivo"'),
+        document.fonts.load('italic 40px "Instrument Serif"'),
+        document.fonts.load('500 12px "JetBrains Mono"'),
+      ]),
+      sleep(1800),
+    ]);
+  }catch(_){}
+}
+
+function containerTexture(sec, withLabel){
+  const W = 1040, Hh = 480;
+  const c = document.createElement('canvas'); c.width = W; c.height = Hh;
+  const g = c.getContext('2d');
+  g.fillStyle = sec.color; g.fillRect(0,0,W,Hh);
+  // corrugation
+  for(let x=0;x<W;x+=16){
+    g.fillStyle='rgba(0,0,0,.20)';        g.fillRect(x,0,6,Hh);
+    g.fillStyle='rgba(255,255,255,.11)';  g.fillRect(x+6,0,3,Hh);
+  }
+  // top / bottom rails + corner castings
+  g.fillStyle='rgba(0,0,0,.38)'; g.fillRect(0,0,W,26); g.fillRect(0,Hh-26,W,26);
+  g.fillStyle='rgba(0,0,0,.55)';
+  [[0,0],[W-54,0],[0,Hh-40],[W-54,Hh-40]].forEach(([x,y])=>g.fillRect(x,y,54,40));
+  // lock-bar hint on both outer edges
+  g.fillStyle='rgba(0,0,0,.35)'; g.fillRect(70,26,6,Hh-52); g.fillRect(W-76,26,6,Hh-52);
+
+  if(withLabel){
+    g.textBaseline='alphabetic'; g.textAlign='left';
+    g.font = '900 168px "Archivo", Impact, "Arial Black", sans-serif';
+    try{ g.fontStretch = 'expanded'; }catch(_){}
+    try{ g.letterSpacing = '-3px'; }catch(_){}
+    g.shadowColor='rgba(0,0,0,.35)'; g.shadowBlur=0; g.shadowOffsetX=5; g.shadowOffsetY=5;
+    g.fillStyle='#fff';
+    g.fillText(sec.label[0], 110, 220);
+    g.fillText(sec.label[1], 110, 392);
+    g.shadowColor='transparent';
+    g.font = '500 20px "JetBrains Mono", monospace';
+    try{ g.letterSpacing = '2px'; }catch(_){}
+    g.fillStyle='rgba(255,255,255,.75)';
+    g.textAlign='right';
+    g.fillText(sec.code, W-110, Hh-44);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+
+/* ─── container factory ─── */
+const items = [];
+const lugMat = new THREE.MeshStandardMaterial({ color:0x3a3d45, roughness:.5, metalness:.7 });
+
+function makeContainer(sec, index){
+  const texF = containerTexture(sec, true);
+  const texP = containerTexture(sec, false);
+  const mk = (map, o={}) => new THREE.MeshStandardMaterial({ map, roughness:.55, metalness:.28, ...o });
+  const plain = mk(texP);
+  const dark  = new THREE.MeshStandardMaterial({ color:0x0b0c11, roughness:.9, metalness:0 });
+  const under = new THREE.MeshStandardMaterial({ color:0x15161b, roughness:.9 });
+
+  const group = new THREE.Group();
+
+  // body: [+x, -x, +y, -y, +z (interior, hidden by doors), -z]
+  const body = new THREE.Mesh(new THREE.BoxGeometry(L,H,D), [plain, plain, plain, under, dark, plain]);
+  group.add(body);
+
+  // T-shaped lifting lug on the roof
+  const stem = new THREE.Mesh(new THREE.BoxGeometry(.2,.12,.2), lugMat);  stem.position.set(0,H/2+.06,0);
+  const cap  = new THREE.Mesh(new THREE.BoxGeometry(.4,.08,.24), lugMat); cap.position.set(0,H/2+.16,0);
+  group.add(stem, cap);
+
+  // doors (front face split into two halves, hinged on the outer edges)
+  const frontL = texF;                       frontL.repeat.set(.5,1); frontL.offset.set(0,0);
+  const frontR = texF.clone(); frontR.needsUpdate = true; frontR.repeat.set(.5,1); frontR.offset.set(.5,0);
+  const doorGeo = new THREE.BoxGeometry(L/2, H, .06);
+  const edgeMat = new THREE.MeshStandardMaterial({ color:new THREE.Color(sec.color).multiplyScalar(.55), roughness:.6, metalness:.3 });
+  const doorL = new THREE.Mesh(doorGeo, [edgeMat,edgeMat,edgeMat,edgeMat, mk(frontL), mk(texP)]);
+  const doorR = new THREE.Mesh(doorGeo, [edgeMat,edgeMat,edgeMat,edgeMat, mk(frontR), mk(texP)]);
+  const hingeL = new THREE.Group(); hingeL.position.set(-L/2, 0, D/2+.03); doorL.position.x =  L/4; hingeL.add(doorL);
+  const hingeR = new THREE.Group(); hingeR.position.set( L/2, 0, D/2+.03); doorR.position.x = -L/4; hingeR.add(doorR);
+  group.add(hingeL, hingeR);
+
+  group.visible = false;
+  scene.add(group);
+
+  const b = new CANNON.Body({
+    mass: 6,
+    shape: new CANNON.Box(new CANNON.Vec3(L/2, H/2, D/2)),
+    linearDamping: .04, angularDamping: .25,
+  });
+  b.linearFactor.set(1,1,0);
+  b.angularFactor.set(0,0,1);
+
+  const it = {
+    sec, index, group, body:b, held:false, hingeL, hingeR,
+    yaw: new THREE.Quaternion().setFromEuler(new THREE.Euler(0, (Math.random()-.5)*.5, 0)),
+  };
+  group.userData.item = it;
+  return it;
+}
+
+function setDoors(it, a){ it.hingeL.rotation.y = -a; it.hingeR.rotation.y = a; }
+
+/* ─── crane rig ─── */
+const rig = { x:0, hx:0, hy:6, hz:0, hs:1, open:.5 };
+const rigGroup = new THREE.Group(); scene.add(rigGroup);
+const metalWhite = new THREE.MeshStandardMaterial({ color:0xefece4, roughness:.4, metalness:.25 });
+const metalGrey  = new THREE.MeshStandardMaterial({ color:0xc7cad2, roughness:.35, metalness:.6 });
+const railMesh = new THREE.Mesh(new THREE.BoxGeometry(1,.16,.3), metalWhite); rigGroup.add(railMesh);
+const trolley  = new THREE.Mesh(new THREE.BoxGeometry(.56,.24,.38), metalWhite); rigGroup.add(trolley);
+const cable    = new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,1,8), metalGrey); rigGroup.add(cable);
+
+const head = new THREE.Group(); rigGroup.add(head);
+const headBody = new THREE.Mesh(new THREE.BoxGeometry(.72,.3,.34), metalWhite); head.add(headBody);
+const eye = new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.3,12), metalGrey); eye.rotation.x = Math.PI/2; eye.position.y = .2; head.add(eye);
+function makeArm(side){
+  const piv = new THREE.Group(); piv.position.set(side*.24, -.12, 0);
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(.09,.5,.14), metalWhite); arm.position.y = -.25; piv.add(arm);
+  const foot = new THREE.Mesh(new THREE.BoxGeometry(.08,.07,.14), metalWhite); foot.position.set(-side*.02,-.465,0); piv.add(foot);
+  head.add(piv); return piv;
+}
+const armL = makeArm(-1), armR = makeArm(1);
+
+const UP = new THREE.Vector3(0,1,0);
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3();
+let LAY = {};
+
+function updateRig(){
+  railMesh.position.set(0, LAY.railY, -.2);
+  trolley.position.set(rig.x, LAY.railY-.2, 0);
+  head.position.set(rig.hx, rig.hy, rig.hz);
+  head.scale.setScalar(rig.hs);
+  armL.rotation.z = -rig.open; armR.rotation.z = rig.open;
+  _a.set(rig.x, LAY.railY-.3, 0);
+  _b.set(rig.hx, rig.hy + .3*rig.hs, rig.hz);
+  _d.subVectors(_b,_a);
+  const len = Math.max(.01, _d.length());
+  cable.position.copy(_a).addScaledVector(_d,.5);
+  cable.scale.set(1,len,1);
+  cable.quaternion.setFromUnitVectors(UP, _d.normalize());
+}
+
+/* ─── layout (responsive) ─── */
+const big = $('#big');
+function fitBig(){
+  big.style.fontSize = '100px';
+  const w = big.scrollWidth || 1;
+  big.style.fontSize = (100 * window.innerWidth * 1.035 / w) + 'px';
+}
+
+function layout(){
+  const w = window.innerWidth, h = window.innerHeight, aspect = w/h;
+  renderer.setSize(w, h, false);
+  camera.aspect = aspect;
+
+  let tw = aspect > 1.1 ? 13.6 : (aspect > .75 ? 11 : 9.2);
+  tw = Math.max(tw, 2*3.5*aspect);
+  const hhz  = tw/(2*aspect);
+  const t    = Math.tan(THREE.MathUtils.degToRad(FOV/2));
+  const Z    = hhz/t;
+  const camY = hhz*.82;
+  camera.position.set(0, camY, Z);
+  camera.lookAt(0, camY, 0);
+  camera.updateProjectionMatrix();
+  camera.updateMatrixWorld(true);
+
+  const railY = camY + hhz*.66;
+  const zF    = Math.min(5, Z*.3);
+  const hhd   = t*(Z-zF);
+  const viewWd = 2*hhd*aspect;
+  const portrait = aspect < .85;
+  const fitW = portrait ? viewWd*.96 : viewWd*.78;
+  let S = portrait ? fitW/L : fitW/(L*1.8);
+  S = Math.min(S, (hhd*2*.55)/H);
+
+  LAY = {
+    aspect, hhz, Z, camY, railY, tw, portrait, S, zF,
+    wallX: tw/2 - .05,
+    viewW0: tw,
+    finalPos: new THREE.Vector3(0, camY + hhd*.06, zF),
+    liftY: railY - 1.4,
+    idleY: railY - 1.7,
+  };
+
+  wallLBody.position.set(-(LAY.wallX+1), 0, 0);
+  wallRBody.position.set( (LAY.wallX+1), 0, 0);
+  railMesh.scale.x = tw*1.8;
+
+  if(current){
+    current.group.scale.setScalar(S);
+    current.group.position.copy(LAY.finalPos);
+    rig.hs = S; rig.hz = zF; rig.hx = 0; rig.x = 0;
+    rig.hy = LAY.finalPos.y + (H/2+HA)*S;
+  }
+  fitBig();
+}
+
+/* ─── state ─── */
+let current = null, busy = true, ready = false, mode = 'idle';
+const mouse = { x:0 };
+
+/* ─── panel (HTML content placed over the container interior) ─── */
+const panel = $('#panel');
+function renderPanel(sec){
+  panel.innerHTML =
+    `<button class="x" aria-label="Close">✕</button>
+     <div class="in">
+       <div class="eyebrow">${sec.eyebrow}</div>
+       <h2>${sec.title}</h2>
+       <p>${sec.body}</p>
+       ${sec.extra()}
+     </div>`;
+  panel.querySelector('.x').addEventListener('click', () => closeAndIdle());
+}
+const _c = new THREE.Vector3();
+function placePanel(){
+  const it = current; if(!it) return;
+  it.group.updateMatrixWorld(true);
+  const w = window.innerWidth, h = window.innerHeight;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const sx of [-1,1]) for(const sy of [-1,1]){
+    _c.set(sx*L/2, sy*H/2, D/2); it.group.localToWorld(_c); _c.project(camera);
+    const px = (_c.x*.5+.5)*w, py = (-_c.y*.5+.5)*h;
+    x0=Math.min(x0,px); x1=Math.max(x1,px); y0=Math.min(y0,py); y1=Math.max(y1,py);
+  }
+  panel.style.left = x0+'px'; panel.style.top = y0+'px';
+  panel.style.width = (x1-x0)+'px'; panel.style.height = (y1-y0)+'px';
+  panel.style.setProperty('--u', ((x1-x0)/100)+'px');
+}
+
+/* ─── choreography ─── */
+function topPoint(it){
+  it.group.updateMatrixWorld(true);
+  return it.group.localToWorld(new THREE.Vector3(0, H/2, 0));
+}
+
+async function openItem(it){
+  if(busy || !ready || it === current) return;
+  busy = true;
+  try{
+    $('#hint').classList.add('hide');
+    if(current) await closeCurrent();
+    mode = 'seq';
+
+    // 1. slide over the container
+    const top = topPoint(it);
+    const sx = rig.x;
+    await tween(850, p => { rig.x = rig.hx = lerp(sx, top.x, p); });
+
+    // 2. lower the claw
+    const sy = rig.hy, ty = top.y + HA;
+    await tween(850, p => { rig.hy = lerp(sy, ty, p); });
+
+    // 3. grip
+    const so = rig.open;
+    await tween(320, p => { rig.open = lerp(so, 0, p); });
+
+    // 4. lift, straightening the container as it swings up
+    world.removeBody(it.body);
+    it.held = true;
+    const P0 = it.group.position.clone(), Q0 = it.group.quaternion.clone(), Qid = new THREE.Quaternion();
+    const rel0 = P0.clone().sub(new THREE.Vector3(rig.hx, rig.hy, rig.hz));
+    const relHang = new THREE.Vector3(0, -(H/2+HA), 0);
+    const hx0 = rig.hx, hy0 = rig.hy;
+    await tween(1100, p => {
+      rig.x = rig.hx = lerp(hx0, 0, p);
+      rig.hy = lerp(hy0, LAY.liftY, p);
+      const rel = rel0.clone().lerp(relHang, p);
+      it.group.position.set(rig.hx+rel.x, rig.hy+rel.y, 0);
+      it.group.quaternion.slerpQuaternions(Q0, Qid, p);
+    });
+
+    // 5. bring it to the front & scale up
+    const startPos = it.group.position.clone();
+    const S = LAY.S, fin = LAY.finalPos;
+    await tween(1000, p => {
+      const s = lerp(1, S, p);
+      it.group.scale.setScalar(s);
+      it.group.position.lerpVectors(startPos, fin, p);
+      rig.hs = s; rig.hz = it.group.position.z; rig.hx = it.group.position.x; rig.x = 0;
+      rig.hy = it.group.position.y + (H/2+HA)*s;
+    });
+
+    // 6. open the doors, reveal the content
+    current = it;
+    renderPanel(it.sec);
+    placePanel();
+    await tween(900, p => setDoors(it, DOOR_OPEN*p), eoc);
+    panel.classList.add('show');
+    mode = 'open';
+  }catch(e){ showErr(e.stack || e); }
+  busy = false;
+}
+
+async function closeCurrent(){
+  const it = current; if(!it) return;
+  panel.classList.remove('show');
+  await sleep(260);
+
+  // doors shut
+  await tween(700, p => setDoors(it, DOOR_OPEN*(1-p)));
+  current = null;
+
+  // back to hanging pose
+  const S = LAY.S, pos0 = it.group.position.clone();
+  const hang = new THREE.Vector3(0, LAY.liftY-(H/2+HA), 0);
+  await tween(900, p => {
+    const s = lerp(S, 1, p);
+    it.group.scale.setScalar(s);
+    it.group.position.lerpVectors(pos0, hang, p);
+    rig.hs = s; rig.hz = it.group.position.z; rig.hx = it.group.position.x; rig.x = 0;
+    rig.hy = it.group.position.y + (H/2+HA)*s;
+  });
+
+  // carry it above the pile and drop it somewhere new
+  let maxTop = 0;
+  for(const o of items) if(o !== it && !o.held) maxTop = Math.max(maxTop, o.body.position.y + H*.8);
+  const dropHy = Math.min(LAY.railY - .5, maxTop + .4 + H + HA);
+  const dx = (Math.random()*2-1) * Math.max(.5, LAY.wallX - L*.9);
+  const hy0 = rig.hy;
+  await tween(1100, p => {
+    rig.x = rig.hx = lerp(0, dx, p);
+    rig.hy = lerp(hy0, dropHy, p);
+    it.group.position.set(rig.hx, rig.hy-(H/2+HA), 0);
+  });
+
+  // let go
+  const so = rig.open;
+  await tween(320, p => { rig.open = lerp(so, .6, p); });
+  it.body.position.set(it.group.position.x, it.group.position.y, 0);
+  it.body.quaternion.set(0,0,0,1);
+  it.body.velocity.set(0,-1,0);
+  it.body.angularVelocity.set(0,0,(Math.random()-.5)*1.2);
+  world.addBody(it.body);
+  it.held = false;
+
+  // claw retreats
+  const hyA = rig.hy;
+  await tween(700, p => { rig.hy = lerp(hyA, LAY.idleY, p); });
+  mode = 'idle';
+}
+
+async function closeAndIdle(){
+  if(busy || !current) return;
+  busy = true;
+  try{ await closeCurrent(); }catch(e){ showErr(e.stack||e); }
+  busy = false;
+}
+
+/* ─── input ─── */
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+function pick(e){
+  const r = canvas.getBoundingClientRect();
+  ndc.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc, camera);
+  const hits = ray.intersectObjects(items.filter(i=>i.group.visible).map(i=>i.group), true);
+  for(const h of hits){
+    let o = h.object;
+    while(o && !(o.userData && o.userData.item)) o = o.parent;
+    if(o) return o.userData.item;
+  }
+  return null;
+}
+canvas.addEventListener('pointermove', e => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  if(!ready) return;
+  canvas.style.cursor = (pick(e) && !busy) ? 'pointer' : 'default';
+});
+canvas.addEventListener('pointerdown', e => {
+  if(!ready || busy) return;
+  const it = pick(e);
+  if(it){ if(it !== current) openItem(it); }
+  else if(current){ closeAndIdle(); }
+});
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-open]');
+  if(!a) return;
+  e.preventDefault();
+  const it = items.find(i => i.sec.id === a.dataset.open);
+  if(it) openItem(it);
+});
+$('#logo').addEventListener('click', e => { e.preventDefault(); closeAndIdle(); });
+window.addEventListener('keydown', e => { if(e.key === 'Escape') closeAndIdle(); });
+window.addEventListener('resize', layout);
+
+/* ─── main loop ─── */
+let last = performance.now();
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt = Math.min(.05, (now-last)/1000); last = now;
+
+  for(const tw of tweens.slice()){
+    const p = Math.min(1, (now - tw.t0) / tw.ms);
+    tw.fn(tw.ease(p));
+    if(p >= 1){ tweens.splice(tweens.indexOf(tw),1); tw.res(); }
+  }
+
+  world.step(1/60, dt, 3);
+  for(const it of items){
+    if(it.held || !it.group.visible) continue;
+    it.group.position.copy(it.body.position);
+    it.group.quaternion.copy(it.body.quaternion).multiply(it.yaw);
+  }
+
+  if(mode === 'idle'){
+    const tx = clamp(mouse.x * LAY.viewW0 * .5, -LAY.wallX, LAY.wallX);
+    rig.x += (tx - rig.x) * Math.min(1, dt*1.6);
+    rig.hx = rig.x + Math.sin(now/900)*.05;
+    rig.hy = lerp(rig.hy, LAY.idleY + Math.sin(now/700)*.05, Math.min(1, dt*4));
+    rig.hz = 0; rig.hs = 1;
+    rig.open += (.55 - rig.open) * Math.min(1, dt*4);
+  }
+  updateRig();
+  if(current) placePanel();
+  renderer.render(scene, camera);
+}
+
+/* ─── boot ─── */
+(async function boot(){
+  await loadFonts();
+  fitBig();
+  SECTIONS.forEach((s,i) => items.push(makeContainer(s,i)));
+  layout();
+  rig.x = rig.hx = 0; rig.hy = LAY.idleY; updateRig();
+  requestAnimationFrame(t => { last = t; frame(t); });
+
+  // drop the containers in one after another
+  const order = items.map((_,i)=>i).sort(() => Math.random()-.5);
+  for(const i of order){
+    const it = items[i];
+    const span = Math.max(.5, LAY.wallX - L/2 - .1);
+    it.body.position.set((Math.random()*2-1)*span, LAY.camY + LAY.hhz + 2, 0);
+    it.body.quaternion.setFromEuler(0,0,(Math.random()-.5)*1.0);
+    it.body.angularVelocity.set(0,0,(Math.random()-.5)*2);
+    world.addBody(it.body);
+    it.group.visible = true;
+    await sleep(300);
+  }
+  await sleep(1400);
+  ready = true; busy = false;
+})().catch(e => showErr(e.stack || e));
+</script>
+</body>
+</html>
